@@ -2,3 +2,7 @@
 elm-stuff
 # elm-repl generated files
 repl-temp-*
+
+.idea/workspace.xml
+.idea/usage.statistics.xml
+.idea/tasks.xml
