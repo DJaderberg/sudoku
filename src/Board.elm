@@ -1,9 +1,8 @@
-module Board exposing (Board, Position, box, column, emptyBoard, generate, getBox, insert, options, positions, row, validBoard)
+module Board exposing (Board, Position, box, boxIndex, column, empty, generate, generator, insert, options, positions, row)
 
 import Dict exposing (Dict)
 import Random exposing (Generator, Seed)
 import Random.List
-import Random.Set
 import Set exposing (Set)
 
 
@@ -41,16 +40,6 @@ positions : List Position
 positions =
     List.range 0 80
         |> List.map (\i -> ( (i // 9) + 1, modBy 9 i + 1 ))
-
-
-previous : Position -> Position
-previous ( x, y ) =
-    case modBy 9 y of
-        1 ->
-            ( 9, y - 1 )
-
-        _ ->
-            ( x, y - 1 )
 
 
 firstEmpty : Board -> Maybe Position
@@ -109,14 +98,14 @@ box b i =
         |> List.map (\p -> get p b)
 
 
-getBox : Position -> Box
-getBox ( x, y ) =
+boxIndex : Position -> Box
+boxIndex ( x, y ) =
     1 + 3 * ((y - 1) // 3) + ((x - 1) // 3)
 
 
 getLocation : Position -> Location
 getLocation pos =
-    { row = Tuple.first pos, column = Tuple.second pos, box = getBox pos }
+    { row = Tuple.first pos, column = Tuple.second pos, box = boxIndex pos }
 
 
 {-| Get all valid options to fill a position with
@@ -142,19 +131,16 @@ options board position =
             Set.singleton x
 
 
-newNumber : Cmd Msg
-newNumber =
-    Random.generate Number (Random.int 1 9)
+generator : Generator (Maybe Board)
+generator =
+    Random.map (Random.initialSeed >> generate) (Random.int Random.minInt Random.maxInt)
 
 
 generate : Seed -> Maybe Board
 generate seed =
     let
-        ( pos, s ) =
-            Random.step (Random.List.shuffle positions) seed
-
         ( boards, _ ) =
-            prependOptions ( [ emptyBoard ], seed )
+            prependOptions ( [ empty ], seed )
     in
     List.head boards
 
@@ -194,35 +180,10 @@ naiveFill position ( board, seed ) =
 
         ( opts, nextSeed ) =
             Random.step optionsGen seed
-
-        _ =
-            Debug.log "Position" position
-
-        _ =
-            Debug.log "options are" opts
     in
     ( List.map (\val -> insert position val board) opts, nextSeed )
 
 
-popRandom : ( Set Int, Seed ) -> ( Maybe Int, ( Set Int, Seed ) )
-popRandom ( input, seed ) =
-    let
-        ( choice, newSeed ) =
-            Random.step (Random.Set.sample input) seed
-    in
-    case choice of
-        Nothing ->
-            ( Nothing, ( input, newSeed ) )
-
-        Just x ->
-            ( Just x, ( Set.remove x input, newSeed ) )
-
-
-validBoard : Board
-validBoard =
-    generate (Random.initialSeed 0) |> Maybe.withDefault emptyBoard
-
-
-emptyBoard : Board
-emptyBoard =
+empty : Board
+empty =
     Dict.empty

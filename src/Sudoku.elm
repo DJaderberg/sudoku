@@ -2,13 +2,11 @@ module Main exposing (Msg(..), main, update, view)
 
 import Board exposing (..)
 import Browser
-import Dict exposing (Dict)
-import Html exposing (Html, button, div, table, text)
-import Html.Events exposing (onClick)
+import Html exposing (Html, div, text)
 
 
 main =
-    Browser.sandbox { init = validBoard, update = update, view = view }
+    Browser.sandbox { init = empty, update = update, view = view }
 
 
 type Msg
@@ -36,4 +34,4 @@ viewBoard board =
 
 viewRow : Board -> Int -> Html msg
 viewRow board r =
-    Html.tr [] (row board r |> List.map (Maybe.withDefault 0 >> String.fromInt >> text))
+    Html.tr [] (row board r |> List.map (Maybe.map String.fromInt >> Maybe.withDefault "0" >> text))
