@@ -1,7 +1,9 @@
-module Board exposing (Board, Position, box, column, emptyBoard, getBox, insert, options, positions, row, validBoard)
+module Board exposing (Board, Position, box, column, emptyBoard, generate, getBox, insert, options, positions, row, validBoard)
 
 import Dict exposing (Dict)
-import Random exposing (Generator)
+import Random exposing (Generator, Seed)
+import Random.List
+import Random.Set
 import Set exposing (Set)
 
 
@@ -35,10 +37,25 @@ insert =
     Dict.insert
 
 
-positions : List ( Int, Int )
+positions : List Position
 positions =
     List.range 0 80
         |> List.map (\i -> ( (i // 9) + 1, modBy 9 i + 1 ))
+
+
+previous : Position -> Position
+previous ( x, y ) =
+    case modBy 9 y of
+        1 ->
+            ( 9, y - 1 )
+
+        _ ->
+            ( x, y - 1 )
+
+
+firstEmpty : Board -> Maybe Position
+firstEmpty b =
+    positions |> List.filter (\p -> get p b == Nothing) |> List.head
 
 
 row : Board -> Int -> List (Maybe Int)
@@ -56,7 +73,7 @@ column b i =
 box : Board -> Int -> List (Maybe Int)
 box b i =
     let
-        ( x, y ) =
+        ( xRange, yRange ) =
             case i of
                 1 ->
                     ( List.range 1 3, List.range 1 3 )
@@ -88,7 +105,7 @@ box b i =
                 _ ->
                     ( [], [] )
     in
-    List.concatMap (\curX -> List.map (\curY -> ( curX, curY )) y) x
+    List.concatMap (\x -> List.map (\y -> ( x, y )) yRange) xRange
         |> List.map (\p -> get p b)
 
 
@@ -130,12 +147,80 @@ newNumber =
     Random.generate Number (Random.int 1 9)
 
 
+generate : Seed -> Maybe Board
+generate seed =
+    let
+        ( pos, s ) =
+            Random.step (Random.List.shuffle positions) seed
+
+        ( boards, _ ) =
+            prependOptions ( [ emptyBoard ], seed )
+    in
+    List.head boards
+
+
+prependOptions : ( List Board, Seed ) -> ( List Board, Seed )
+prependOptions ( boards, seed ) =
+    case boards of
+        [] ->
+            ( [], seed )
+
+        b :: bs ->
+            case firstEmpty b of
+                Nothing ->
+                    ( boards, seed )
+
+                Just p ->
+                    let
+                        ( newBoards, newSeed ) =
+                            naiveFill p ( b, seed )
+                    in
+                    case newBoards of
+                        -- Nothing found? Backtrack!
+                        [] ->
+                            prependOptions (prependOptions ( bs, newSeed ))
+
+                        _ ->
+                            prependOptions ( List.append newBoards bs, newSeed )
+
+
+{-| Add an element to a board, in attempt to solve the board
+-}
+naiveFill : Position -> ( Board, Seed ) -> ( List Board, Seed )
+naiveFill position ( board, seed ) =
+    let
+        optionsGen =
+            options board position |> Set.toList |> Random.List.shuffle
+
+        ( opts, nextSeed ) =
+            Random.step optionsGen seed
+
+        _ =
+            Debug.log "Position" position
+
+        _ =
+            Debug.log "options are" opts
+    in
+    ( List.map (\val -> insert position val board) opts, nextSeed )
+
+
+popRandom : ( Set Int, Seed ) -> ( Maybe Int, ( Set Int, Seed ) )
+popRandom ( input, seed ) =
+    let
+        ( choice, newSeed ) =
+            Random.step (Random.Set.sample input) seed
+    in
+    case choice of
+        Nothing ->
+            ( Nothing, ( input, newSeed ) )
+
+        Just x ->
+            ( Just x, ( Set.remove x input, newSeed ) )
+
+
 validBoard : Board
 validBoard =
-    List.foldl
-        (\pos board -> insert pos (options board pos |> Set.toList |> List.head |> Maybe.withDefault 0) board)
-        emptyBoard
-        positions
+    generate (Random.initialSeed 0) |> Maybe.withDefault emptyBoard
 
 
 emptyBoard : Board

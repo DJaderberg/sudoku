@@ -4,6 +4,7 @@ import Board exposing (..)
 import Dict
 import Expect exposing (Expectation)
 import Fuzz exposing (Fuzzer, int, list, string)
+import Random
 import Set exposing (fromList, size)
 import Test exposing (..)
 
@@ -90,14 +91,13 @@ suite =
                     |> Set.fromList
                     |> Expect.equalSets (Set.fromList [ 44, 45, 46, 54, 55, 56, 64, 65, 66 ])
         , test "Valid boards have 81 elements" <|
-            \_ -> (Dict.toList validBoard |> List.length) |> Expect.equal 81
+            \_ -> (validBoard |> Dict.toList |> List.length) |> Expect.equal 81
         , test "Rows have 9 elements" <|
             \_ -> (Board.row validBoard 4 |> List.length) |> Expect.equal 9
         , test "Columns have 9 elements" <|
             \_ -> (Board.column validBoard 4 |> List.length) |> Expect.equal 9
-        , skip <|
-            test "Rows have 9 different elements" <|
-                \_ ->
-                    (Board.column validBoard 1 |> List.map (Maybe.withDefault 0) |> Set.fromList)
-                        |> Expect.equalSets (Set.fromList (List.range 1 9))
+        , test "Rows have 9 different elements" <|
+            \_ ->
+                (Board.column validBoard 1 |> List.map (Maybe.withDefault 0) |> Set.fromList)
+                    |> Expect.equalSets (Set.fromList (List.range 1 9))
         ]
