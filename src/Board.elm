@@ -22,10 +22,6 @@ type alias Board =
     Dict Position Int
 
 
-type Msg
-    = Number Int
-
-
 get : Position -> Board -> Maybe Int
 get =
     Dict.get
@@ -133,7 +129,8 @@ options board position =
 
 generator : Generator (Maybe Board)
 generator =
-    Random.map (Random.initialSeed >> generate) (Random.int Random.minInt Random.maxInt)
+    Random.int Random.minInt Random.maxInt
+        |> Random.map (Random.initialSeed >> generate)
 
 
 generate : Seed -> Maybe Board

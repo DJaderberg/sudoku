@@ -2,26 +2,74 @@ module Main exposing (Msg(..), main, update, view)
 
 import Board exposing (..)
 import Browser
-import Html exposing (Html, div, text)
+import Html exposing (Html, button, div, text)
+import Html.Events exposing (onClick)
+import Random
+
+
+
+-- MAIN
 
 
 main =
-    Browser.sandbox { init = empty, update = update, view = view }
+    Browser.element
+        { init = init
+        , update = update
+        , subscriptions = \_ -> Sub.none
+        , view = view
+        }
+
+
+
+-- MODEL
+
+
+type alias Model =
+    { board : Board
+    }
+
+
+init : () -> ( Model, Cmd Msg )
+init _ =
+    ( { board = empty }, generateBoardMsg )
+
+
+
+-- UPDATE
 
 
 type Msg
-    = None
+    = GenerateBoard
+    | SetBoard Board
 
 
+update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        None ->
-            model
+        GenerateBoard ->
+            ( model
+            , generateBoardMsg
+            )
+
+        SetBoard b ->
+            ( { model | board = b }
+            , Cmd.none
+            )
 
 
+generateBoardMsg =
+    Random.generate (Maybe.withDefault empty >> SetBoard) generator
+
+
+
+-- VIEW
+
+
+view : Model -> Html Msg
 view model =
     div []
-        [ div [] [ viewBoard model ]
+        [ div [] [ viewBoard model.board ]
+        , button [ onClick GenerateBoard ] [ text "New board" ]
         ]
 
 
