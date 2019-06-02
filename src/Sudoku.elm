@@ -1,9 +1,11 @@
 module Main exposing (Msg(..), main, update, view)
 
-import Board exposing (..)
+import Board exposing (Board)
 import Browser
-import Html exposing (Html, button, div, text)
-import Html.Events exposing (onClick)
+import Css exposing (..)
+import Html.Styled exposing (..)
+import Html.Styled.Attributes exposing (css)
+import Html.Styled.Events exposing (onClick)
 import Random
 
 
@@ -16,7 +18,7 @@ main =
         { init = init
         , update = update
         , subscriptions = \_ -> Sub.none
-        , view = view
+        , view = view >> toUnstyled
         }
 
 
@@ -31,7 +33,7 @@ type alias Model =
 
 init : () -> ( Model, Cmd Msg )
 init _ =
-    ( { board = empty }, generateBoardMsg )
+    ( { board = Board.empty }, generateBoardMsg )
 
 
 
@@ -58,7 +60,7 @@ update msg model =
 
 
 generateBoardMsg =
-    Random.generate (Maybe.withDefault empty >> SetBoard) generator
+    Random.generate (Maybe.withDefault Board.empty >> SetBoard) Board.generator
 
 
 
@@ -73,13 +75,46 @@ view model =
         ]
 
 
-viewBoard : Board -> Html msg
+viewBoard : Board -> Html Msg
 viewBoard board =
     List.range 1 9
         |> List.map (viewRow board)
-        |> Html.table []
+        |> Html.Styled.table [ css [ boardStyle ] ]
 
 
-viewRow : Board -> Int -> Html msg
+boardStyle : Style
+boardStyle =
+    batch
+        [ borderCollapse collapse
+        , border3 (px 1) solid (rgb 0 0 0)
+        ]
+
+
+viewRow : Board -> Int -> Html Msg
 viewRow board r =
-    Html.tr [] (row board r |> List.map (Maybe.map String.fromInt >> Maybe.withDefault "0" >> text))
+    Html.Styled.tr [] (Board.row board r |> List.map viewPosition)
+
+
+viewPosition : Maybe Int -> Html Msg
+viewPosition =
+    Maybe.map String.fromInt >> Maybe.withDefault "0" >> text >> List.singleton >> td [ css [ positionStyle ] ]
+
+
+positionStyle : Style
+positionStyle =
+    batch
+        [ positionFont
+        , width (px 25)
+        , height (px 25)
+        , textAlign center
+        , border3 (px 1) solid (rgb 0 0 0)
+        ]
+
+
+positionFont : Style
+positionFont =
+    batch
+        [ fontFamilies [ "sans-serif" ]
+        , fontSize (px 24)
+        , fontWeight normal
+        ]
