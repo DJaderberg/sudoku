@@ -75,10 +75,11 @@ update msg model =
 
 
 generateBoardMsg =
-    Random.generate (Maybe.withDefault Board.empty >> SetBoard) Board.generator
+    Random.generate (Maybe.withDefault Board.empty >> SetBoard) Board.puzzle
 
 
 
+-- SUBSCRIPTIONS
 -- VIEW
 
 
@@ -119,10 +120,10 @@ viewPosition highlight board position =
     position
         |> (\p -> Board.get p board)
         |> Maybe.map String.fromInt
-        |> Maybe.withDefault "0"
+        |> Maybe.withDefault ""
         |> text
         |> List.singleton
-        |> td [ css ([ positionStyle ] |> withHighlight highlight position), onClick (SetHighlight position) ]
+        |> td [ css ([ positionStyle ] |> withHighlight highlight board position), onClick (SetHighlight position) ]
 
 
 positionStyle : Style
@@ -136,20 +137,27 @@ positionStyle =
         ]
 
 
-withHighlight : Highlight -> Board.Position -> List Style -> List Style
-withHighlight highlight position list =
+withHighlight : Highlight -> Board -> Board.Position -> List Style -> List Style
+withHighlight highlight board position list =
     case highlight of
         Nothing ->
             list
 
         Just h ->
-            List.append (getHighlight h position) list
+            List.append (getHighlight board h position) list
 
 
-getHighlight : Board.Position -> Board.Position -> List Style
-getHighlight highlight position =
+getHighlight : Board -> Board.Position -> Board.Position -> List Style
+getHighlight board highlight position =
+    let
+        value =
+            Board.get highlight board
+    in
     if position == highlight then
         [ backgroundColor (rgb 101 215 235) ]
+
+    else if value /= Nothing && value == Board.get position board then
+        [ backgroundColor (rgb 131 165 185) ]
 
     else if Tuple.first position == Tuple.first highlight || Tuple.second position == Tuple.second highlight then
         [ backgroundColor (rgb 204 210 212) ]

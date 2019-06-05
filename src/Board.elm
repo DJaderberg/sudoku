@@ -1,4 +1,4 @@
-module Board exposing (Board, Position, box, boxIndex, column, empty, generate, generator, get, insert, options, positions, row)
+module Board exposing (Board, Position, box, boxIndex, column, empty, generate, generator, get, insert, options, positions, puzzle, row)
 
 import Dict exposing (Dict)
 import Random exposing (Generator, Seed)
@@ -127,6 +127,37 @@ options board position =
             Set.singleton x
 
 
+puzzle : Generator (Maybe Board)
+puzzle =
+    let
+        toRemove =
+            Random.int 10 25
+    in
+    generatePuzzle toRemove generator
+
+
+generatePuzzle : Generator Int -> Generator (Maybe Board) -> Generator (Maybe Board)
+generatePuzzle i board =
+    board
+        |> Random.map (Maybe.withDefault Dict.empty >> Dict.toList)
+        |> Random.map2 popElements i
+        |> Random.andThen identity
+        |> Random.map (Dict.fromList >> Just)
+
+
+popElements : Int -> List ( Position, Int ) -> Generator (List ( Position, Int ))
+popElements i list =
+    if i > 0 then
+        Random.List.shuffle list
+            |> Random.map (List.tail >> Maybe.withDefault [])
+            |> Random.andThen (popElements (i - 1))
+
+    else
+        Random.constant list
+
+
+{-| Generate a filled board
+-}
 generator : Generator (Maybe Board)
 generator =
     Random.int Random.minInt Random.maxInt
