@@ -1,4 +1,4 @@
-module Board exposing (Board, Position, box, boxIndex, column, empty, generate, generator, insert, options, positions, row)
+module Board exposing (Board, Position, box, boxIndex, column, empty, generate, generator, get, insert, options, positions, row)
 
 import Dict exposing (Dict)
 import Random exposing (Generator, Seed)
