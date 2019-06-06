@@ -2,10 +2,12 @@ module Main exposing (Msg(..), main, update, view)
 
 import Board exposing (Board)
 import Browser
+import Browser.Events
 import Css exposing (..)
 import Html.Styled exposing (..)
 import Html.Styled.Attributes exposing (css)
 import Html.Styled.Events exposing (onClick)
+import Json.Decode as Decode
 import Random
 
 
@@ -17,7 +19,7 @@ main =
     Browser.element
         { init = init
         , update = update
-        , subscriptions = \_ -> Sub.none
+        , subscriptions = subscriptions
         , view = view >> toUnstyled
         }
 
@@ -53,6 +55,8 @@ type Msg
     = GenerateBoard
     | SetBoard Board
     | SetHighlight Board.Position
+    | SetValue Board.Value
+    | RemoveValue
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -73,6 +77,32 @@ update msg model =
             , Cmd.none
             )
 
+        SetValue v ->
+            ( { model | board = addValue model.highlight v model.board }, Cmd.none )
+
+        RemoveValue ->
+            ( { model | board = removeValue model.highlight model.board }, Cmd.none )
+
+
+addValue : Highlight -> Board.Value -> Board -> Board
+addValue highlight value board =
+    case ( value, highlight ) of
+        ( Just i, Just position ) ->
+            Board.insert position i board
+
+        _ ->
+            board
+
+
+removeValue : Highlight -> Board -> Board
+removeValue highlight board =
+    case highlight of
+        Nothing ->
+            board
+
+        Just position ->
+            Board.remove position board
+
 
 generateBoardMsg =
     Random.generate (Maybe.withDefault Board.empty >> SetBoard) Board.puzzle
@@ -80,6 +110,32 @@ generateBoardMsg =
 
 
 -- SUBSCRIPTIONS
+
+
+subscriptions : Model -> Sub Msg
+subscriptions _ =
+    Browser.Events.onKeyUp keyDecoder
+
+
+keyDecoder : Decode.Decoder Msg
+keyDecoder =
+    Decode.map toValue (Decode.field "key" Decode.string)
+
+
+toValue : String -> Msg
+toValue string =
+    let
+        deleteKeys =
+            [ "Backspace", "Clear", "Cut", "Delete", "EraseEof" ]
+    in
+    if List.any ((==) string) deleteKeys then
+        RemoveValue
+
+    else
+        SetValue (String.toInt string)
+
+
+
 -- VIEW
 
 

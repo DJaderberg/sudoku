@@ -1,4 +1,4 @@
-module Board exposing (Board, Position, box, boxElements, boxIndex, column, empty, generate, generator, get, insert, options, positions, puzzle, row)
+module Board exposing (Board, Position, Value, box, boxElements, boxIndex, column, empty, generate, generator, get, insert, options, positions, puzzle, remove, row)
 
 import Dict exposing (Dict)
 import Random exposing (Generator, Seed)
@@ -8,6 +8,12 @@ import Set exposing (Set)
 
 type alias Position =
     ( Int, Int )
+
+
+{-| A value in a position
+-}
+type alias Value =
+    Maybe Int
 
 
 type alias Box =
@@ -22,7 +28,7 @@ type alias Board =
     Dict Position Int
 
 
-get : Position -> Board -> Maybe Int
+get : Position -> Board -> Value
 get =
     Dict.get
 
@@ -30,6 +36,11 @@ get =
 insert : Position -> Int -> Board -> Board
 insert =
     Dict.insert
+
+
+remove : Position -> Board -> Board
+remove =
+    Dict.remove
 
 
 positions : List Position
@@ -43,13 +54,13 @@ firstEmpty b =
     positions |> List.filter (\p -> get p b == Nothing) |> List.head
 
 
-row : Board -> Int -> List (Maybe Int)
+row : Board -> Int -> List Value
 row b i =
     List.range 1 9
         |> List.map (\e -> Dict.get ( i, e ) b)
 
 
-column : Board -> Int -> List (Maybe Int)
+column : Board -> Int -> List Value
 column b i =
     List.range 1 9
         |> List.map (\e -> Dict.get ( e, i ) b)
@@ -93,7 +104,7 @@ boxElements index =
     List.concatMap (\x -> List.map (\y -> ( x, y )) yRange) xRange
 
 
-box : Board -> Int -> List (Maybe Int)
+box : Board -> Int -> List Value
 box b i =
     boxElements i
         |> List.map (\p -> get p b)
