@@ -102,7 +102,7 @@ boardStyle : Style
 boardStyle =
     batch
         [ borderCollapse collapse
-        , border3 (px 1) solid (rgb 0 0 0)
+        , border3 (px 4) solid (rgb 0 0 0)
         ]
 
 
@@ -123,18 +123,41 @@ viewPosition highlight board position =
         |> Maybe.withDefault ""
         |> text
         |> List.singleton
-        |> td [ css ([ positionStyle ] |> withHighlight highlight board position), onClick (SetHighlight position) ]
+        |> td [ css (positionStyle :: positionBorder position |> withHighlight highlight board position), onClick (SetHighlight position) ]
 
 
 positionStyle : Style
 positionStyle =
     batch
         [ positionFont
-        , width (px 25)
-        , height (px 25)
+        , width (px 35)
+        , height (px 35)
         , textAlign center
         , border3 (px 1) solid (rgb 0 0 0)
         ]
+
+
+positionBorder : Board.Position -> List Style
+positionBorder ( r, c ) =
+    let
+        thickBorder =
+            px 3
+
+        top =
+            if modBy 3 (r - 1) == 0 then
+                Just (borderTopWidth thickBorder)
+
+            else
+                Nothing
+
+        right =
+            if modBy 3 c == 0 then
+                Just (borderRightWidth thickBorder)
+
+            else
+                Nothing
+    in
+    List.filterMap identity [ top, right ]
 
 
 withHighlight : Highlight -> Board -> Board.Position -> List Style -> List Style
@@ -159,7 +182,7 @@ getHighlight board highlight position =
     else if value /= Nothing && value == Board.get position board then
         [ backgroundColor (rgb 131 165 185) ]
 
-    else if Tuple.first position == Tuple.first highlight || Tuple.second position == Tuple.second highlight then
+    else if Tuple.first position == Tuple.first highlight || Tuple.second position == Tuple.second highlight || Board.boxIndex position == Board.boxIndex highlight then
         [ backgroundColor (rgb 204 210 212) ]
 
     else
@@ -170,6 +193,6 @@ positionFont : Style
 positionFont =
     batch
         [ fontFamilies [ "sans-serif" ]
-        , fontSize (px 24)
+        , fontSize (px 32)
         , fontWeight normal
         ]

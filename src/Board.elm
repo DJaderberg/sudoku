@@ -1,4 +1,4 @@
-module Board exposing (Board, Position, box, boxIndex, column, empty, generate, generator, get, insert, options, positions, puzzle, row)
+module Board exposing (Board, Position, box, boxElements, boxIndex, column, empty, generate, generator, get, insert, options, positions, puzzle, row)
 
 import Dict exposing (Dict)
 import Random exposing (Generator, Seed)
@@ -55,11 +55,11 @@ column b i =
         |> List.map (\e -> Dict.get ( e, i ) b)
 
 
-box : Board -> Int -> List (Maybe Int)
-box b i =
+boxElements : Int -> List Position
+boxElements index =
     let
         ( xRange, yRange ) =
-            case i of
+            case index of
                 1 ->
                     ( List.range 1 3, List.range 1 3 )
 
@@ -91,6 +91,11 @@ box b i =
                     ( [], [] )
     in
     List.concatMap (\x -> List.map (\y -> ( x, y )) yRange) xRange
+
+
+box : Board -> Int -> List (Maybe Int)
+box b i =
+    boxElements i
         |> List.map (\p -> get p b)
 
 
