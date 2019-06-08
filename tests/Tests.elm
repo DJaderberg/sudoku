@@ -73,10 +73,6 @@ suite =
                 \p ->
                     options empty p
                         |> Expect.equalSets (List.range 1 9 |> Set.fromList)
-            , fuzz position "Position filled makes options singleton" <|
-                \p ->
-                    options (insert p 9 empty) p
-                        |> Expect.equalSets (Set.singleton 9)
             , test "Element filled on row" <|
                 \_ ->
                     options (insert ( 1, 1 ) 9 empty) ( 1, 9 )
@@ -101,6 +97,10 @@ suite =
                         (empty |> insert ( 1, 1 ) 1 |> insert ( 2, 1 ) 2 |> insert ( 3, 1 ) 3)
                         ( 4, 1 )
                         |> Expect.equalSets (List.range 4 9 |> Set.fromList)
+            , test "Already set value is an option" <|
+                \_ ->
+                    options (empty |> insert ( 1, 1 ) 1) ( 1, 1 )
+                        |> Expect.equalSets (Set.fromList [ 1, 2, 3, 4, 5, 6, 7, 8, 9 ])
             ]
         , test "Row 1 of dummyBoard is 11 to 19" <|
             \_ ->
@@ -166,4 +166,15 @@ suite =
                         |> List.map (Board.box b >> List.filterMap identity >> List.sort)
                         |> Expect.equalLists (List.repeat 9 [ 1, 2, 3, 4, 5, 6, 7, 8, 9 ])
             ]
+        , test "Everything valid on empty board" <|
+            \_ ->
+                valid empty ( 1, 1 ) |> Expect.true "(1,1) is OK on empty board"
+        , test "Valid on partially filled board" <|
+            \_ ->
+                valid (empty |> insert ( 1, 1 ) 1) ( 1, 1 )
+                    |> Expect.true "1 in (1,1) is OK"
+        , test "Invalid on invalid board" <|
+            \_ ->
+                valid (empty |> insert ( 1, 1 ) 1 |> insert ( 2, 1 ) 1) ( 1, 1 )
+                    |> Expect.false "1 in (1,1) is not OK"
         ]

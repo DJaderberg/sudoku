@@ -1,4 +1,4 @@
-module Board exposing (Board, Position, Value, box, boxElements, boxIndex, column, empty, generate, generator, get, insert, options, positions, puzzle, remove, row)
+module Board exposing (Board, Position, Value, box, boxElements, boxIndex, column, empty, generate, generator, get, insert, options, positions, puzzle, remove, row, solver, valid)
 
 import Dict exposing (Dict)
 import Random exposing (Generator, Seed)
@@ -54,10 +54,20 @@ firstEmpty b =
     positions |> List.filter (\p -> get p b == Nothing) |> List.head
 
 
+rowElements : Int -> List Position
+rowElements i =
+    List.range 1 9 |> List.map (\e -> ( i, e ))
+
+
 row : Board -> Int -> List Value
 row b i =
     List.range 1 9
         |> List.map (\e -> Dict.get ( i, e ) b)
+
+
+columnElements : Int -> List Position
+columnElements i =
+    List.range 1 9 |> List.map (\e -> ( e, i ))
 
 
 column : Board -> Int -> List Value
@@ -120,8 +130,8 @@ getLocation pos =
     { row = Tuple.first pos, column = Tuple.second pos, box = boxIndex pos }
 
 
-{-| Get all valid options to fill a position with
-considering only basic rules
+{-| Get all valid options to fill a position with considering only basic rules
+The value a position already has is considered an option
 -}
 options : Board -> Position -> Set Int
 options board position =
@@ -130,17 +140,29 @@ options board position =
             getLocation position
 
         filled =
-            [ row board location.row, column board location.column, box board location.box ]
+            [ rowElements location.row
+            , columnElements location.column
+            , boxElements location.box
+            ]
                 |> List.concatMap identity
-                |> List.filterMap identity
+                |> List.filter ((/=) position)
+                |> List.filterMap (\p -> get p board)
                 |> Set.fromList
     in
+    Set.diff (Set.fromList (List.range 1 9)) filled
+
+
+{-| True if the value of the position has an obvious problem,
+considering the basic rules of Sudoku
+-}
+valid : Board -> Position -> Bool
+valid board position =
     case get position board of
         Nothing ->
-            Set.diff (Set.fromList (List.range 1 9)) filled
+            True
 
-        Just x ->
-            Set.singleton x
+        Just v ->
+            Set.member v (options board position)
 
 
 puzzle : Generator (Maybe Board)
@@ -182,9 +204,20 @@ generator =
 
 generate : Seed -> Maybe Board
 generate seed =
+    solve empty seed
+
+
+solver : Board -> Generator (Maybe Board)
+solver board =
+    Random.int Random.minInt Random.maxInt
+        |> Random.map (Random.initialSeed >> solve board)
+
+
+solve : Board -> Seed -> Maybe Board
+solve board seed =
     let
         ( boards, _ ) =
-            prependOptions ( [ empty ], seed )
+            prependOptions ( [ board ], seed )
     in
     List.head boards
 

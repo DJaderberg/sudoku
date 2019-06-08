@@ -57,6 +57,7 @@ type Msg
     | SetHighlight Board.Position
     | SetValue Board.Value
     | RemoveValue
+    | SolveBoard
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -78,10 +79,19 @@ update msg model =
             )
 
         SetValue v ->
-            ( { model | board = addValue model.highlight v model.board }, Cmd.none )
+            ( { model | board = addValue model.highlight v model.board }
+            , Cmd.none
+            )
 
         RemoveValue ->
-            ( { model | board = removeValue model.highlight model.board }, Cmd.none )
+            ( { model | board = removeValue model.highlight model.board }
+            , Cmd.none
+            )
+
+        SolveBoard ->
+            ( model
+            , Random.generate (Maybe.withDefault model.board >> SetBoard) (Board.solver model.board)
+            )
 
 
 addValue : Highlight -> Board.Value -> Board -> Board
@@ -144,6 +154,7 @@ view model =
     div []
         [ div [] [ viewBoard model.highlight model.board ]
         , button [ onClick GenerateBoard ] [ text "New board" ]
+        , button [ onClick SolveBoard ] [ text "Solve" ]
         ]
 
 
@@ -179,7 +190,7 @@ viewPosition highlight board position =
         |> Maybe.withDefault ""
         |> text
         |> List.singleton
-        |> td [ css (positionStyle :: positionBorder position |> withHighlight highlight board position), onClick (SetHighlight position) ]
+        |> td [ css (positionStyle :: positionBorder position |> withHighlight highlight board position |> withError board position), onClick (SetHighlight position) ]
 
 
 positionStyle : Style
@@ -224,6 +235,15 @@ withHighlight highlight board position list =
 
         Just h ->
             List.append (getHighlight board h position) list
+
+
+withError : Board -> Board.Position -> List Style -> List Style
+withError board position list =
+    if Board.valid board position then
+        list
+
+    else
+        color (rgb 255 0 0) :: list
 
 
 getHighlight : Board -> Board.Position -> Board.Position -> List Style
