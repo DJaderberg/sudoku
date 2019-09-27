@@ -169,7 +169,7 @@ puzzle : Generator (Maybe Board)
 puzzle =
     let
         toRemove =
-            Random.int 10 25
+            Random.int 15 30
     in
     generatePuzzle toRemove generator
 

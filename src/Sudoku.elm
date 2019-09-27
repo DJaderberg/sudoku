@@ -32,10 +32,6 @@ type alias Highlight =
     Maybe Board.Position
 
 
-type alias PositionValue =
-    Maybe Int
-
-
 type alias Model =
     { board : Board
     , highlight : Highlight
