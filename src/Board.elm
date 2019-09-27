@@ -27,7 +27,6 @@ type alias Location =
 type alias Board =
     Dict Position Int
 
-
 get : Position -> Board -> Value
 get =
     Dict.get

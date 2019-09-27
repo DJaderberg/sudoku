@@ -4,6 +4,7 @@ import Board exposing (Board)
 import Browser
 import Browser.Events
 import Css exposing (..)
+import Dict
 import Html.Styled exposing (..)
 import Html.Styled.Attributes exposing (css)
 import Html.Styled.Events exposing (onClick)
@@ -27,6 +28,11 @@ main =
 
 -- MODEL
 
+type Direction
+    = Left
+    | Right
+    | Up
+    | Down
 
 type alias Highlight =
     Maybe Board.Position
@@ -54,6 +60,7 @@ type Msg
     | SetValue Board.Value
     | RemoveValue
     | SolveBoard
+    | Move Direction
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -89,6 +96,27 @@ update msg model =
             , Random.generate (Maybe.withDefault model.board >> SetBoard) (Board.solver model.board)
             )
 
+        Move dir ->
+            ( { model | highlight = Just (updatePosition model.highlight dir) }
+            , Cmd.none
+            )
+
+updatePosition : Highlight -> Direction -> Board.Position
+updatePosition highlight direction =
+    case highlight of
+        Just position ->
+            let
+                (x, y) = position
+            in
+            case direction of
+                Left -> (x, max 1 (y - 1))
+                Right -> (x, min 9 (y + 1))
+                Up -> (max 1 (x - 1), y)
+                Down -> (min 9 (x + 1), y)
+        Nothing ->
+            (1, 1)
+
+
 
 addValue : Highlight -> Board.Value -> Board -> Board
 addValue highlight value board =
@@ -120,7 +148,7 @@ generateBoardMsg =
 
 subscriptions : Model -> Sub Msg
 subscriptions _ =
-    Browser.Events.onKeyUp keyDecoder
+    Browser.Events.onKeyDown keyDecoder
 
 
 keyDecoder : Decode.Decoder Msg
@@ -133,10 +161,15 @@ toValue string =
     let
         deleteKeys =
             [ "Backspace", "Clear", "Cut", "Delete", "EraseEof" ]
+        arrowKeys =
+            [ ("ArrowLeft", Left), ("ArrowRight", Right), ("ArrowUp", Up), ("ArrowDown", Down) ] |> Dict.fromList
+        arrow = Dict.get string arrowKeys
     in
     if List.any ((==) string) deleteKeys then
         RemoveValue
 
+    else if arrow /= Maybe.Nothing then
+        Move (Maybe.withDefault Left arrow)
     else
         SetValue (String.toInt string)
 
