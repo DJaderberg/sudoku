@@ -114,7 +114,7 @@ updatePosition highlight direction =
                 Up -> (max 1 (x - 1), y)
                 Down -> (min 9 (x + 1), y)
         Nothing ->
-            (1, 1)
+            (5, 5)
 
 
 
@@ -170,6 +170,10 @@ toValue string =
 
     else if arrow /= Maybe.Nothing then
         Move (Maybe.withDefault Left arrow)
+    else if string == "N" || string == "n" then
+        GenerateBoard
+    else if string == "S" || string == "s" then
+        SolveBoard
     else
         SetValue (String.toInt string)
 
