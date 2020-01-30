@@ -1,4 +1,4 @@
-module Main exposing (Msg(..), main, update, view)
+module Sudoku exposing (Msg(..), main, update, view)
 
 import Board exposing (Board)
 import Browser
@@ -28,11 +28,13 @@ main =
 
 -- MODEL
 
+
 type Direction
     = Left
     | Right
     | Up
     | Down
+
 
 type alias Highlight =
     Maybe Board.Position
@@ -101,21 +103,30 @@ update msg model =
             , Cmd.none
             )
 
+
 updatePosition : Highlight -> Direction -> Board.Position
 updatePosition highlight direction =
     case highlight of
         Just position ->
             let
-                (x, y) = position
+                ( x, y ) =
+                    position
             in
             case direction of
-                Left -> (x, max 1 (y - 1))
-                Right -> (x, min 9 (y + 1))
-                Up -> (max 1 (x - 1), y)
-                Down -> (min 9 (x + 1), y)
-        Nothing ->
-            (5, 5)
+                Left ->
+                    ( x, max 1 (y - 1) )
 
+                Right ->
+                    ( x, min 9 (y + 1) )
+
+                Up ->
+                    ( max 1 (x - 1), y )
+
+                Down ->
+                    ( min 9 (x + 1), y )
+
+        Nothing ->
+            ( 5, 5 )
 
 
 addValue : Highlight -> Board.Value -> Board -> Board
@@ -161,19 +172,25 @@ toValue string =
     let
         deleteKeys =
             [ "Backspace", "Clear", "Cut", "Delete", "EraseEof" ]
+
         arrowKeys =
-            [ ("ArrowLeft", Left), ("ArrowRight", Right), ("ArrowUp", Up), ("ArrowDown", Down) ] |> Dict.fromList
-        arrow = Dict.get string arrowKeys
+            [ ( "ArrowLeft", Left ), ( "ArrowRight", Right ), ( "ArrowUp", Up ), ( "ArrowDown", Down ) ] |> Dict.fromList
+
+        arrow =
+            Dict.get string arrowKeys
     in
     if List.any ((==) string) deleteKeys then
         RemoveValue
 
     else if arrow /= Maybe.Nothing then
         Move (Maybe.withDefault Left arrow)
+
     else if string == "N" || string == "n" then
         GenerateBoard
+
     else if string == "S" || string == "s" then
         SolveBoard
+
     else
         SetValue (String.toInt string)
 
@@ -184,11 +201,27 @@ toValue string =
 
 view : Model -> Html Msg
 view model =
-    div []
+    div [ css topLevelContainer ]
         [ div [] [ viewBoard model.highlight model.board ]
-        , button [ onClick GenerateBoard ] [ text "New board" ]
-        , button [ onClick SolveBoard ] [ text "Solve" ]
+        , div []
+            [ button [ onClick GenerateBoard, css mainButtonStyle ] [ text "New board" ]
+            , button [ onClick SolveBoard, css mainButtonStyle ] [ text "Solve" ]
+            ]
         ]
+
+
+mainButtonStyle : List Style
+mainButtonStyle =
+    [ margin (Css.em 1) ]
+
+
+topLevelContainer : List Style
+topLevelContainer =
+    [ displayFlex
+    , alignItems center
+    , flexDirection column
+    , margin (vh 3)
+    ]
 
 
 viewBoard : Highlight -> Board -> Html Msg
