@@ -203,16 +203,18 @@ view : Model -> Html Msg
 view model =
     div [ css topLevelContainer ]
         [ div [] [ viewBoard model.highlight model.board ]
-        , div []
-            [ button [ onClick GenerateBoard, css mainButtonStyle ] [ text "New board" ]
-            , button [ onClick SolveBoard, css mainButtonStyle ] [ text "Solve" ]
+        , div [ css buttonContainer ]
+            [ button [ onClick GenerateBoard ] [ text "New board" ]
+            , button [ onClick SolveBoard ] [ text "Solve" ]
             ]
         ]
 
 
-mainButtonStyle : List Style
-mainButtonStyle =
-    [ margin (Css.em 1) ]
+buttonContainer : List Style
+buttonContainer =
+    [ displayFlex
+    , alignItems center
+    ]
 
 
 topLevelContainer : List Style
