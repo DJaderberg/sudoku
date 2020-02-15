@@ -8,3 +8,4 @@ repl-temp-*
 .idea/tasks.xml
 
 node_modules/*
+assets/*
