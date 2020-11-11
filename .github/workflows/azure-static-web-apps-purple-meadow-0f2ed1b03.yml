@@ -25,11 +25,11 @@ jobs:
         with:
           # Version of Elm to use. E.g. 0.19.1
           elm-version: 0.19.1
-      - name: Build and Deploy
+      - run: elm make --optimize --output=index.html src/Sudoku.elm
+      - name: Deploy
         id: builddeploy
         uses: Azure/static-web-apps-deploy@v0.0.1-preview
         with:
-          app_build_command: elm make --optimize --output=public/index.html src/Sudoku.elm
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_PURPLE_MEADOW_0F2ED1B03 }}
           repo_token: ${{ secrets.GITHUB_TOKEN }} # Used for Github integrations (i.e. PR comments)
           action: "upload"
